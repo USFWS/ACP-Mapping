@@ -118,7 +118,7 @@ test <- as.data.frame(test0) %>%
 plot(st_geometry(test))
 #that worked, now turn into function and apply across all transects
 
-points2line <- function(x, id=NA, crs=4326){
+points2line <- function(x, Year=unique(x$Year), Transect=unique(x$Transect), crs=4326){
   #this function accepts sf object of points and returns an sf linestring
   #also will accept an ID variable and return that as an attribute of the linestring, 
   # otherwise returns an ID == NA.
@@ -131,20 +131,55 @@ points2line <- function(x, id=NA, crs=4326){
     st_linestring() %>%
     st_sfc(crs=4326) %>%
     st_sf(geometry=.) %>%
-    mutate(id = id)
+    mutate(Year = Year, Transect=Transect)
   return(linestring)
 }
 
 #test
 x = filter(birds, Year == 2016, Transect == 39)
-points2line(x=x, id=39)
+points2line(x=x)
+
+#Now apply function across all transects
+lines <- birds %>% group_split(Year, Transect) %>%
+  map(points2line) %>%
+  map_dfr(rbind)
+#plot them
+filter(lines, Year==2010) %>%
+  st_geometry() %>%
+  plot()
+# found some QC issues, plot 2010, 2013, 2015 2016 2017 2019 data and others
   
 #plot in leaflet
-tm_shape(acp) + tm_polygons(col = "STRATNAME", alpha = 0.5) + 
-  tm_shape(test, name="Flown Track") + tm_lines() +
-  tm_shape(test0, name="Obs") + tm_dots("Time") +
+Y = 2007
+df <- filter(lines, Year==Y)
+bdf <- filter(birds, Year==Y)
+tm <- tm_shape(acp) + tm_polygons(col = "STRATNAME", alpha = 0.5) + 
+  tm_shape(df, name=paste(Y, "Flown Track")) + tm_lines() + 
+  tm_text("Transect") + 
+  tm_shape(bdf, name=paste(Y,"Bird Obs")) + tm_dots() + 
   tm_basemap(server = "Esri.WorldGrayCanvas") + 
   tm_scale_bar() 
+
+#loop through years
+tm <- tm_shape(acp) + tm_polygons(col = "STRATNAME", alpha = 0.5)
+for(Y in 2007:2019){
+  df <- filter(lines, Year==Y)
+  bdf <- filter(birds, Year==Y)
+  tm <- tm + tm_shape(df, name=paste(Y, "Flown Track")) + tm_lines() + 
+    tm_text("Transect") + 
+  tm_shape(bdf, name=paste(Y,"Bird Obs")) + tm_dots() + 
+  tm_basemap(server = "Esri.WorldGrayCanvas") + 
+  tm_scale_bar() 
+}
+tm 
+#hide layers
+# %>% 
+#   tmap_leaflet() %>%
+#   leaflet::hideGroup(c(paste(2008:2019, "Flown Track"), paste(2008:2019, "Bird Obs")))
+
+#QC issues with transect numbering, try sorting by time?
+
+
 
 #segmentize transects
 source("trans2seg.R")
