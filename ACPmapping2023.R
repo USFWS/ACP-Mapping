@@ -18,8 +18,13 @@
 # The code below should not be run, it is only used to produce a usable QC data set.
 #   Many interactive leaflet maps are produced to explore data issues. If you do run it, 
 #   Clear viewer occasionally.
-# Code is only provide to document QC process and provide a repeatable source for 
-#   the produced data sets. 
+# Code is only provided to document QC process and provide a repeatable source for 
+#   the produced data sets.  
+#
+# Update February 2024, Emily Silverman found a transect numbering problem in 2018
+#   Many observations have incorrect Transect numbers, Code, and Stratum. 
+#   These are all in the 10-02 area and associated with Heather. 
+#   Code section added to fix this lines 1034 on
 
 #load and map ACP
 library(sf)
@@ -1026,6 +1031,49 @@ lines <- birds3 %>% st_as_sf(coords = c("Lon", "Lat"), crs = 4326) %>%
 plot(st_geometry(lines))
 lines <- rename(lines, NavTransect = Transect)
 st_write(lines, dsn = "Data/ACP_2023/analysis_output/Lines_Obs.2.gpkg")
+################################################################################
+## Fix 2018 10-02 issue found by Emily Silverman, Feb. 2024
+## Many 10-02 observation are labeled as "low" stratum and have incorrect Transect number
+##  fix this by assigning NavTransect to Transect and "10-02" as stratum for 2018
+#  I am also changing the Code == "DEAD" to Code == 5 so that there are not read errors
+dat <- read_csv(file = "Data/ACP_2023/analysis_output/Bird_QC_Obs.seat.stratum.csv", 
+                col_types = cols(Code = "c")) |>
+  mutate(Transect = if_else(Year >= 2018 & NavTransect > 200, NavTransect, Transect), 
+         Stratum =  if_else(Year >= 2018 & NavTransect > 200, "10-02 Area", Stratum), 
+         Code = if_else(Code == "DEAD", "5", Code)) |>
+  mutate(Code = as.integer(Code)) 
+#replaced Code == DEAD to Code == 5
+#check data
+df <- filter(dat, Stratum == "10-02 Area") |>
+  st_as_sf(coords=c("Lon", "Lat"), crs=4326) 
+tm_shape(acp) + tm_polygons(fill = "STRATNAME", fill_alpha = 0.5) +
+  tm_shape(df, name="Bird Obs") + tm_dots(col="Transect") +
+  tm_basemap(server = "Esri.WorldGrayCanvas") +
+  tm_scalebar()
+df <- filter(dat, Stratum == "Low" & Year >= 2018) |>
+  st_as_sf(coords=c("Lon", "Lat"), crs=4326) 
+tm_shape(acp) + tm_polygons(fill = "STRATNAME", fill_alpha = 0.5) +
+  tm_shape(df, name="Bird Obs") + tm_dots(col="Transect") +
+  tm_basemap(server = "Esri.WorldGrayCanvas") +
+  tm_scalebar()
+#make lines
+source("points2line.R")
+lines <- dat %>% st_as_sf(coords = c("Lon", "Lat"), crs = 4326) %>%
+  select(-Transect) %>% rename(Transect = NavTransect) %>%
+  group_split(Year, Transect, Day) %>%
+  map(points2line) %>%
+  map_dfr(rbind)
+#check lines
+plot(st_geometry(lines[lines$Year == 2018,]))
+tm_shape(acp) + tm_polygons(fill = "STRATNAME", fill_alpha = 0.5) +
+  tm_shape(lines[lines$Year == 2018,]) + tm_lines() +
+  tm_basemap(server = "Esri.WorldGrayCanvas") +
+  tm_scalebar()
+#looks good
+lines <- rename(lines, NavTransect = Transect)
+#write data
+write_csv(dat, file = "Data/ACP_2023/analysis_output/Bird_QC_Obs.seat.stratum.2024.csv")
+st_write(lines, dsn = "Data/ACP_2023/analysis_output/Lines_Obs.2024.gpkg")
 
 ################################################################################
 # speed <- function(x){
