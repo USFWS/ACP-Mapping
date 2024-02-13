@@ -2,8 +2,9 @@
 # code originally from https://examples.distancesampling.org/dsm-data-formatting/dsm-data-formatting.html
 trans2seg <- function(
   transects=NA, 
+  transectID = "Transect", #label for the Transect id, often "ORIGID" in shapefiles
   segLength=1000, 
-  utm=26906, #'+proj=utm +zone=6 +ellps=GRS80 +datum=NAD83 +units=m +no_defs'
+  utm=6332, #'+proj=utm +zone=6 +ellps=GRS80 +datum=NAD83 +units=m +no_defs'
   proj=4326, 
   year=NA,
   area=NA){
@@ -12,9 +13,12 @@ trans2seg <- function(
   library(dplyr)
   library(lwgeom)
   
-  #transform to UTMs
-  transects <- st_transform(transects, st_crs(utm))
   
+  
+  #transform to UTMs
+  transects <- st_transform(transects, st_crs(utm)) %>%
+    rename(ORIGID = !!transectID )
+
   # do the segmenting
   segs <- st_segmentize(transects, dfMaxLength=units::set_units(segLength, "metres"))
   # transform back to lat/long
@@ -82,8 +86,10 @@ trans2seg <- function(
   # find centroids
   segs <- st_centroid(segs)
   
-  # project back to lat/long
-  segs <- st_transform(segs, proj)
+  # project back to lat/long and rename to original transect ID
+  segs <- st_transform(segs, proj) %>%
+    rename( !!transectID := ORIGID)
+  
   return(segs)
 }
 
