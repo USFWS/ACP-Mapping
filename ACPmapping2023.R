@@ -25,6 +25,8 @@
 #   Many observations have incorrect Transect numbers, Code, and Stratum. 
 #   These are all in the 10-02 area and associated with Heather. 
 #   Code section added to fix this lines 1034 on
+#
+#  ALso in Feb. 2024, found error in Code and Month for WWL in 2016, changes, see below
 
 #load and map ACP
 library(sf)
@@ -1074,7 +1076,34 @@ lines <- rename(lines, NavTransect = Transect)
 #write data
 write_csv(dat, file = "Data/ACP_2023/analysis_output/Bird_QC_Obs.seat.stratum.2024.csv")
 st_write(lines, dsn = "Data/ACP_2023/analysis_output/Lines_Obs.2024.gpkg")
-
+################################################################################
+## Fix 2016 issue found by Emily Silverman on 20230214: 
+#    (1) WWL Code = 2 should be 1 for transects 19 and 24
+#    (2) Month should be 6 for WWL in 2016 (found by Emily and me simultaneously)
+dat <- read_csv(file = "Data/ACP_2023/analysis_output/Bird_QC_Obs.seat.stratum.2024.csv")
+dat <- mutate(dat , 
+              Code = if_else(Year == 2016 & Observer == "WWL" & Seat == "RF", 1, Code), 
+              Month = 6)
+#make lines
+source("points2line.R")
+lines <- dat %>% st_as_sf(coords = c("Lon", "Lat"), crs = 4326) %>%
+  select(-Transect) %>% rename(Transect = NavTransect) %>%
+  group_split(Year, Transect, Day) %>%
+  map(points2line) %>%
+  map_dfr(rbind)
+#check lines
+plot(st_geometry(lines[lines$Year == 2016,]))
+acp <- st_read(dsn="Data/ACP_2023/source_data/ACP_DesignStrata.gpkg") %>%
+  st_transform(crs=4326) 
+tm_shape(acp) + tm_polygons(fill = "STRATNAME", fill_alpha = 0.5) +
+  tm_shape(lines[lines$Year == 2016,]) + tm_lines() +
+  tm_basemap(server = "Esri.WorldGrayCanvas") +
+  tm_scalebar()
+#looks good
+lines <- rename(lines, NavTransect = Transect)
+#write data, use timestamp in file name
+write_csv(dat, file = paste0("Data/ACP_2023/analysis_output/Bird_QC_Obs",Sys.Date(),".csv"))
+st_write(lines, dsn = paste0("Data/ACP_2023/analysis_output/Lines_Obs",Sys.Date(), ".gpkg"))
 ################################################################################
 # speed <- function(x){
 #  ##function to calculate speed based on position and time as recorded in data

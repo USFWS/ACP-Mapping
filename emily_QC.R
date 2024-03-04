@@ -43,3 +43,49 @@ tm_shape(acp) + tm_polygons(fill = "STRATNAME", fill_alpha = 0.5) +
   tm_shape(df, name="Bird Obs") + tm_dots(col="NavTransect") +
   tm_basemap(server = "Esri.WorldGrayCanvas") +
   tm_scalebar()
+
+
+library(tidyverse)
+m <- 0.85
+n <- 10000
+se <- rep(c(0.01, 0.02, 0.04, 0.06), each = n)
+Pop <- rnorm(n*4, 10000, 500)
+
+df <- data.frame( Y = Pop*rnorm(4*n, m, se), ncol = 1)
+df$Rep <- factor(rep(1:4, each = n))
+
+ggplot(df, aes(x = Rep, y = Y, group = Rep)) + geom_violin()
+
+df |> group_by(Rep) |> summarize(m = mean(Y), se = sd(Y))
+
+
+dat <- read_csv(file = "Data/ACP_2023/analysis_output/Bird_QC_Obs.seat.stratum.2024.csv")
+
+library(tmap)
+library(sf)
+acp <- st_read(dsn="Data/ACP_2023/source_data/ACP_DesignStrata.gpkg") %>%
+  st_transform(crs=3338) 
+df <- filter(dat, Year == 2016)
+table(df$Observer, df$Seat)
+table(df$Observer, df$Seat, df$Code)
+ddf <- filter(df, Seat == "RF", NavTransect %in% c(19, 24)) |>
+  st_as_sf(coords=c("Lon", "Lat"), crs=4326) |>
+  mutate(Code = factor(Code))
+tm_shape(acp) + tm_polygons() +
+  tm_shape(ddf) + tm_dots(fill = "Code") +
+  tm_basemap(server = "Esri.WorldGrayCanvas") +
+  tm_scalebar()
+#just code = 1
+tm_shape(acp) + tm_polygons() +
+  tm_shape(filter(ddf, Code == 1)) + tm_dots(fill = "Code") +
+  tm_basemap(server = "Esri.WorldGrayCanvas") +
+  tm_scalebar()
+#plot
+tmap_mode(mode = "view")
+ddf <- filter(df, Observer == "WWL", NavTransect %in% c(11:12, 19, 24)) |>
+  st_as_sf(coords=c("Lon", "Lat"), crs=4326) |>
+  mutate(Code = factor(Code))
+tm_shape(acp) + tm_polygons() +
+  tm_shape(ddf) + tm_dots(fill = "Code") +
+  tm_basemap(server = "Esri.WorldGrayCanvas") +
+  tm_scalebar()
