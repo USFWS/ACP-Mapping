@@ -9,5 +9,8 @@ Design_Transects/**
 .pdf
 .png
 .html
-
-
+*.Rproj
+.Rproj.user
+README.html
+DISCLAIMER.html
+NEWS.html
