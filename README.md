@@ -14,7 +14,8 @@ This project aims to estimate spatial and temporal trends of waterfowl and water
 
 GAMs are fit to observed data for each focal species, and after a process of model checking and development, density predictions are made across a grid (currently 6km^2 cells) for each year after removing any effect of observer, which are treated as random effects. From this, density prediction maps and associated uncertainty can be produced for any year, and population estimates can be made by summing predicted population size over the entire map or sub-region of interest. Population temporal trends for specific locations or the entire map are estimated as the geometric mean of expected population size over a specific time interval. Uncertainty is estimated by simulation from the posterior distribution of model parameters.
 
-![](SPEI_2019.png)
+![](SPEI_2019.png)  
+
 *Spectacled eider density across the Arctic Coastal Plain in 2019 as predicted from a spatial GAM. Predictions are expected number of eiders per kilometer squared.*
 
 The main uses for these data products are for ESA Section 7 consultations and Species Status Assessments, as well as general avian distribution and trend maps. Harvest management is also based on some of these data, but as of 2023 those rely on design-based population estimates, which can easily be produced from the bird observation data. Because of the data quality errors discussed above, estimates documented in the Pacific Flyway Council Databook [available here](https://www.pacificflyway.gov/Documents.asp) or the USFWS Alaska Region 7 waterfowl [status memo](https://www.sciencebase.gov/catalog/item/64caee10d34e70357a355a17), or historical estimates reported in the R package [AKaerial](https://github.com/USFWS/AKaerial) will not match estimates obtained from this version of the data (as of 2024). Please report any data errors or quality issues [on this GitHub page](https://github.com/USFWS/ACP-Mapping/issues).  
