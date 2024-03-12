@@ -40,7 +40,7 @@ The file [map_density.R](https://github.com/USFWS/ACP-Mapping/blob/main/map_dens
 
 ## Getting help
 
-Contact the [Erik Osnas](emailto:Erik_Osnas@fws.gov) for questions about this repository, source data, data products, or to report bugs or data errors. 
+Contact [Erik Osnas](mailto:Erik_Osnas@fws.gov) for questions about this repository, source data, data products, or to report bugs or data errors. 
 
 ## Contribute
 
