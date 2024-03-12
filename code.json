@@ -1,8 +1,8 @@
 [
   {
-    "name": "r7-repo-template",
+    "name": "ACP-Mapping",
     "organization": "U.S. Fish & Wildlife Service",
-    "description": "R7 GitHub Repository Template",
+    "description": "Code for estimating spatial and temporal trends of waterbirds on the Arctic Coastal Plain, Alaska."
     "version": "0.1.0",
     "status": "Development",
 
@@ -16,10 +16,10 @@
       ]
     },
 
-    "homepageURL": "https://github.com/USFWS/r7-repo-template",
-    "downloadURL": "https://github.com/USFWS/r7-repo-template/archive/refs/heads/main.zip",
-    "disclaimerURL": "https://github.com/USFWS/r7-repo-template/blob/main/DISCLAIMER.md",
-    "repositoryURL": "https://github.com/USFWS/r7-repo-template.git",
+    "homepageURL": "https://github.com/USFWS/ACP-Mapping",
+    "downloadURL": "https://github.com/USFWS/ACP-Mapping/archive/refs/heads/main.zip",
+    "disclaimerURL": "https://github.com/USFWS/ACP-Mapping/blob/main/DISCLAIMER.md",
+    "repositoryURL": "https://github.com/USFWS/ACP-Mapping.git",
     "vcs": "git",
 
     "laborHours": 4,
@@ -36,12 +36,12 @@
     ],
 
     "contact": {
-      "name": "Your first and last name",
-      "email": "firstname_lastname@fws.gov"
+      "name": "Erik Osnas",
+      "email": "Erik_Osnas@fws.gov"
     },
 
     "date": {
-      "metadataLastUpdated": "2023-05-17"
+      "metadataLastUpdated": "2024-03-11"
     }
   }
 ]
