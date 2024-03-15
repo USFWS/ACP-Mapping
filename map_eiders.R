@@ -1,3 +1,9 @@
+#code to fit GAMs to SPEI and STEI, check model fit,
+#  explore models and select best one for mapping/prediction
+#  Also produces figure use in ABC and Ducks9 presentation 2024
+#  model fit objects and figures are writen to .RData/RDS objects. 
+#code to produce density data sets for USFWS are generated and written in the file 
+#  write_map.R, which reads in the fit objects produced here
 library(tidyverse)
 library(sf)
 #read in lines and birds data
