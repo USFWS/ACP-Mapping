@@ -29,3 +29,7 @@ for(i in 2007:2023){
 }
 #try to read it
 test <- st_read(dsn="Data/ACP_2023/analysis_output/ACP_SPEI.gpkg", layer = "2007")
+#add metadata as layer table
+commit <- as.data.frame(git2r::revparse_single(revision = "HEAD"))
+st_write(commit, dsn="Data/ACP_2023/analysis_output/ACP_SPEI.gpkg", 
+         layer = "Version")
