@@ -26,8 +26,18 @@
 #   These are all in the 10-02 area and associated with Heather. 
 #   Code section added to fix this lines 1034 on
 #
-#  ALso in Feb. 2024, found error in Code and Month for WWL in 2016, changes, see below
-
+#  Also in Feb. 2024, found error in Code and Month for WWL in 2016, changes, see below
+#
+#  March 2024: found typo in observer initials while writing metadata data dictionary.
+#    For 2007 to 2009, RMD and RDM is one observer. Should change all to RDM for 
+#    Robert D. MacDonald. This will affect the bird observation data file but not the 
+#    flight lines. I will re-create all data assets, however, to reflect the commit 
+#    version associated with this revision. All models and model output (Maps) will 
+#    need to be redone. This should have a small effect on the map and trends. Note 
+#    that all results presented at ABC, SeaDuck, and Ducks9 are affected. As well 
+#    as the first version of the SPEI map distributed to USFWS ES in February 2024.
+#    Change code at end of file, no need to run all. 
+#
 #load and map ACP
 library(sf)
 library(tidyverse)
@@ -1105,22 +1115,17 @@ lines <- rename(lines, NavTransect = Transect)
 write_csv(dat, file = paste0("Data/ACP_2023/analysis_output/Bird_QC_Obs",Sys.Date(),".csv"))
 st_write(lines, dsn = paste0("Data/ACP_2023/analysis_output/Lines_Obs",Sys.Date(), ".gpkg"))
 ################################################################################
-# speed <- function(x){
-#  ##function to calculate speed based on position and time as recorded in data
-#  # used as a QC step to identify problematic points
-#  # according the HMW plausible speeds are 45 - 150 mph
-#  #x is a sf data frame with point geometry and a time variable for the time of recording for each point
-#  df <- x %>% group_by(Transect, Day, Observer) %>%
-#    slice(-n())
-#  df2 <- x %>% group_by(Transect, Day, Observer) %>%
-#    slice(-1)
-# 
-#  df3 <- st_distance(x=df, y=df2, by_element = TRUE)
-#  dTime <- df2$Time - df$Time
-#  return( as.vector( (60*60*df3) / (dTime*1000) ) )
-# }
-# #apply to all data for one year, 2017
-# x <- data.frame(Speed = as.vector(speed(x = bdf)/1.61) ) %>% #miles per hour
-#   drop_na()
-# hist(x$Speed[x$Speed < 300], xlim=c(-200, 300), breaks=100)
-# summary(x$Speed[x$Speed < Inf])
+# Implement fix of Observer typo found in March 2024:
+#   Change all observer initials RMD to RDM in 2007 to 2009
+# Also add commit version info to data assets
+library(tidyverse)
+birds <- read_csv(file = "Data/ACP_2023/analysis_output/Bird_QC_Obs2024-02-15.csv")
+birds <- birds |>
+  mutate(Observer = replace(Observer, Year %in% 2007:2008 & Observer == "RMD", "RDM"))
+#check
+table(birds$Year, birds$Observer)
+#looks good
+#write data, use timestamp in file name
+write_csv(birds, file = paste0("Data/ACP_2023/analysis_output/Bird-QC-Obs-",Sys.Date(),".csv"))
+#commit changes
+git2r::commit(all=TRUE, message="fix observer typo")

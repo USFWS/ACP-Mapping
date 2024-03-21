@@ -377,3 +377,23 @@ make_segments <- function(x = NA, y = NA, w = 200){
 # plot(st_geometry(test))
 # #works!
 # #####
+
+# speed <- function(x){
+#  ##function to calculate speed based on position and time as recorded in data
+#  # used as a QC step to identify problematic points
+#  # according the HMW plausible speeds are 45 - 150 mph
+#  #x is a sf data frame with point geometry and a time variable for the time of recording for each point
+#  df <- x %>% group_by(Transect, Day, Observer) %>%
+#    slice(-n())
+#  df2 <- x %>% group_by(Transect, Day, Observer) %>%
+#    slice(-1)
+# 
+#  df3 <- st_distance(x=df, y=df2, by_element = TRUE)
+#  dTime <- df2$Time - df$Time
+#  return( as.vector( (60*60*df3) / (dTime*1000) ) )
+# }
+# #apply to all data for one year, 2017
+# x <- data.frame(Speed = as.vector(speed(x = bdf)/1.61) ) %>% #miles per hour
+#   drop_na()
+# hist(x$Speed[x$Speed < 300], xlim=c(-200, 300), breaks=100)
+# summary(x$Speed[x$Speed < Inf])
