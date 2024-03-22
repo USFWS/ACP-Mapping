@@ -4,6 +4,10 @@
 #  model fit objects and figures are writen to .RData/RDS objects. 
 #code to produce density data sets for USFWS are generated and written in the file 
 #  write_map.R, which reads in the fit objects produced here
+#
+# This code is largely developmental for result before March 2024
+#   replaced by species specific fi_XXXX.R model fitting and checking scripts
+#
 library(tidyverse)
 library(sf)
 #read in lines and birds data
