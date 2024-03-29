@@ -269,7 +269,7 @@ map_total <- function(gamfit = NA, grid = NA, Obs = "HMW", Year = 2023,
 #newdata must be a grid over which prediction are computed and 
 #  must contain a variable named "Area" that gives the area of each grid cell in km^2
 #  the prediction grid need not be the same (cell size) as used to fit model
-#  newdata must also have at least one name observer, even if the term id left out. 
+#  newdata must also have at least one name observer, even if the term is excluded. 
 map_total2 <- function(gamfit = NA, newdata = NULL, 
                       Nsamples = 1000, exclude.term = "s(Observer)"){
   library(tidyverse)
