@@ -5,7 +5,8 @@
 library(tidyverse)
 library(sf)
 source("map_density_functions.R")
-fit2.o <- readRDS("SPEI_fit.RDS")
+spp = "STEI"
+fit <- readRDS(paste0(spp, "_fit.RDS"))
 #make new grid
 acp <- st_read(dsn="Data/ACP_2023/analysis_output/ACP_DesignStrata_QC.gpkg")
 #make grid
@@ -16,7 +17,7 @@ grid <- st_intersection(acp, st_make_grid(x=acp, cellsize = 750)) %>%
 #need to change unit of input grid to km^2
 grid <- mutate(grid, Grid.Area = units::set_units(Grid.Area, km^2)) 
 #test it
-map <- map_GAM(gamfit = fit2.o, grid = grid, Spp = "SPEI", Year = 2020)
+map <- map_GAM(gamfit = fit, grid = grid, Spp = spp, Year = 2020)
 map[[1]][[1]]
 #seems to work
 #iterate through years and write to geopackage
