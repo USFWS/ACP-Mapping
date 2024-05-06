@@ -95,36 +95,36 @@ best <- get(row.names(aic)[which(aic$AIC == min(aic$AIC))])
 ################################################
 saveRDS(best, file = paste0(spp, "_fit.RDS"))
 
-#check_fit <- function(best = NULL){
-  library(mgcv)
-  library(DHARMa)
-  library(mgcViz)
-  library(gratia)
-#check fit
-summary(best)
-gam.check(best)
-qq.gam(best, rep = 100)
-#############################################
-# DHARMa package for residual plots
-
-testDispersion(best)
-simulationOutput <- simulateResiduals(fittedModel = best, n = 500)
-plot(simulationOutput)
-plotResiduals(simulationOutput)
-testZeroInflation(simulationOutput)
-#looks good!
-#resid <- recalculateResiduals(simulationOutput, group = df$Year)
-#testSpatialAutocorrelation(resid, x=df$X, y = df$Y) #see error message, need to recalculate resid and arrage by group
-# can't get Spatial Autocorrelation to work, might be some issue with fit
-
-appraise(best)
-draw(best, select = 1, dist = 0.02, rug = FALSE)
-draw(best, select = 2, rug = FALSE)
-#try 2D check
-b <- getViz(best, nsim = 50)
-ck1 <- check2D(b, x1 = "X", x2 = "Y")
-ck1 + l_gridCheck2D(gridFun = mean)
-#looks OK
+# #check_fit <- function(best = NULL){
+#   library(mgcv)
+#   library(DHARMa)
+#   library(mgcViz)
+#   library(gratia)
+# #check fit
+# summary(best)
+# gam.check(best)
+# qq.gam(best, rep = 100)
+# #############################################
+# # DHARMa package for residual plots
+# 
+# testDispersion(best)
+# simulationOutput <- simulateResiduals(fittedModel = best, n = 500)
+# plot(simulationOutput)
+# plotResiduals(simulationOutput)
+# testZeroInflation(simulationOutput)
+# #looks good!
+# #resid <- recalculateResiduals(simulationOutput, group = df$Year)
+# #testSpatialAutocorrelation(resid, x=df$X, y = df$Y) #see error message, need to recalculate resid and arrage by group
+# # can't get Spatial Autocorrelation to work, might be some issue with fit
+# 
+# appraise(best)
+# draw(best, select = 1, dist = 0.02, rug = FALSE)
+# draw(best, select = 2, rug = FALSE)
+# #try 2D check
+# b <- getViz(best, nsim = 50)
+# ck1 <- check2D(b, x1 = "X", x2 = "Y")
+# ck1 + l_gridCheck2D(gridFun = mean)
+# #looks OK
 
 library(quarto)
 # save.image("temp.RData")

@@ -6,7 +6,7 @@ library(tidyverse)
 library(sf)
 source("map_density_functions.R")
 spp = "STEI"
-fit <- readRDS(paste0(spp, "_fit.RDS"))
+fit <- readRDS(paste0("Data/ACP_2023/analysis_output/gam/", spp, "_fit.RDS"))
 #make new grid
 acp <- st_read(dsn="Data/ACP_2023/analysis_output/ACP_DesignStrata_QC.gpkg")
 #make grid
@@ -22,19 +22,21 @@ map[[1]][[1]]
 #seems to work
 #iterate through years and write to geopackage
 for(i in 2007:2023){
-  map <- map_GAM(gamfit = fit2.o, grid = grid, Spp = "SPEI", Year = i)
+  map <- map_GAM(gamfit = fit2.o, grid = grid, Spp = spp, Year = i)
   st_geometry(map$preds) <- "geometry"
   map <- map$preds |> select(-CV) |>
     mutate(Grid.Area = units::drop_units(Grid.Area))
-  st_write(map, dsn=paste0("Data/ACP_2023/analysis_output/ACP-SPEI-",Sys.Date(),".gpkg"), 
+  st_write(map, dsn=paste0("Data/ACP_2023/analysis_output/ACP-", spp, "-", 
+                           Sys.Date(),".gpkg"), 
            layer = paste0(i))
 }
 #try to read it
-test <- st_read(dsn=paste0("Data/ACP_2023/analysis_output/ACP-SPEI-",Sys.Date(),".gpkg"), 
-                layer = "2007")
+# test <- st_read(dsn=paste0("Data/ACP_2023/analysis_output/ACP-SPEI-",Sys.Date(),".gpkg"), 
+#                 layer = "2007")
 #add metadata as layer table
 #commit changes
-git2r::commit(all=TRUE, message="refit models and wrote geopackage for SPEI")
+git2r::commit(all=TRUE, message=paste0("refit models and wrote geopackage for ", spp))
 commit <- as.data.frame(git2r::revparse_single(revision = "HEAD"))
-st_write(commit, dsn=paste0("Data/ACP_2023/analysis_output/ACP-SPEI-",Sys.Date(),".gpkg"), 
+st_write(commit, dsn=paste0("Data/ACP_2023/analysis_output/ACP-", spp, "-", 
+                            Sys.Date(),".gpkg"), 
          layer = "Version")

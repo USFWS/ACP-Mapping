@@ -1,0 +1,68 @@
+---
+title: "Model Fit Diagnostics"
+format: 
+  html: 
+    embed-resources: true
+---
+
+```{r}
+#| echo: false  
+#| message: false
+#| warning: false
+
+library(mgcv)
+library(DHARMa)
+library(mgcViz)
+library(gratia)
+
+results <- readRDS("temp.RDS")
+
+spp <- results$spp
+aic <- results$aic
+best <- results$best
+```
+
+## Species
+Species is **`r spp`**
+
+## Model  
+
+### AIC table:  
+```{r} 
+print(aic)
+```
+
+Best model is **`r row.names(aic)[which(aic$AIC == min(aic$AIC))]`**. This will be known as `best` in the code below. 
+
+## Model summary:  
+
+```{r} 
+summary(best)
+```
+
+
+```{r}
+gam.check(best)
+qq.gam(best, rep = 100)
+```
+
+## Model Checking
+
+```{r}
+appraise(best)
+draw(best, select = 1, dist = 0.02, rug = FALSE)
+draw(best, select = 2, rug = FALSE)
+#try 2D check
+b <- getViz(best, nsim = 50)
+ck1 <- check2D(b, x1 = "X", x2 = "Y")
+ck1 + l_gridCheck2D(gridFun = mean)
+```
+
+
+```{r}
+testDispersion(best)
+simulationOutput <- simulateResiduals(fittedModel = best, n = 500)
+plot(simulationOutput)
+plotResiduals(simulationOutput)
+testZeroInflation(simulationOutput)
+```
