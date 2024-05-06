@@ -31,11 +31,12 @@ for(i in 2007:2023){
            layer = paste0(i))
 }
 #try to read it
-# test <- st_read(dsn=paste0("Data/ACP_2023/analysis_output/ACP-SPEI-",Sys.Date(),".gpkg"), 
-#                 layer = "2007")
+test <- st_read(dsn=paste0("Data/ACP_2023/analysis_output/ACP-", spp, "-", 
+                           Sys.Date(),".gpkg"),
+                layer = "2007")
 #add metadata as layer table
 #commit changes
-git2r::commit(all=TRUE, message=paste0("refit models and wrote geopackage for ", spp))
+git2r::commit(all=TRUE, message=paste0("Wrote geopackage for ", spp))
 commit <- as.data.frame(git2r::revparse_single(revision = "HEAD"))
 st_write(commit, dsn=paste0("Data/ACP_2023/analysis_output/ACP-", spp, "-", 
                             Sys.Date(),".gpkg"), 
