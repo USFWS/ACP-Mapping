@@ -5,19 +5,19 @@
 library(tidyverse)
 library(sf)
 source("map_density_functions.R")
-spp = "STEI"
-fit <- readRDS(paste0("Data/ACP_2023/analysis_output/gam/", spp, "_fit.RDS"))
+spp = "SNOW"
+fit <- readRDS(paste0("Data/ACP_2023/analysis_output/gam/", spp, "nb_fit.RDS"))
 #make new grid
 acp <- st_read(dsn="Data/ACP_2023/analysis_output/ACP_DesignStrata_QC.gpkg")
 #make grid
 acp <- select_area(area = acp, select = "all") %>%
   st_transform(crs=3338)
-grid <- st_intersection(acp, st_make_grid(x=acp, cellsize = 750)) %>%
+grid <- st_intersection(acp, st_make_grid(x=acp, cellsize = 1000)) %>%
   mutate(Sample.Label = row.names(.), Grid.Area = st_area(.))
 #need to change unit of input grid to km^2
 grid <- mutate(grid, Grid.Area = units::set_units(Grid.Area, km^2)) 
 #test it
-map <- map_GAM(gamfit = fit, grid = grid, Spp = spp, Year = 2020)
+map <- map_GAM(gamfit = fit, grid = grid, Spp = spp, Year = 2022, exclude.term = NULL)
 map[[1]][[1]]
 #seems to work
 #iterate through years and write to geopackage

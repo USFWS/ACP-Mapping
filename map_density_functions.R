@@ -131,7 +131,7 @@ map_GAM <- function(gamfit = NA, grid = NA, design = NA, Obs = "HMW", Year = 202
   newdat <- st_centroid(grid) %>%
     st_coordinates() %>%
     as.data.frame() %>%
-    mutate(Observer = Obs, logArea = 0, Year = Year) 
+    mutate(Observer = Obs, logArea = 0, Year = Year, fYear = Year) 
   # %>%
   #   cbind(grid_position)
   preds <- predict(gamfit, newdata = newdat, type = "response", se.fit = TRUE,

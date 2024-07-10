@@ -32,12 +32,13 @@ Species is **`r spp`**
 print(aic)
 ```
 
-Best model is **`r row.names(aic)[which(aic$AIC == min(aic$AIC))]`**. This will be known as `best` in the code below. 
+Best model is **`r if(!is.null(rownames(aic))){row.names(aic)[which(aic$AIC == min(aic$AIC))]}else{"fit.o.re"}`**. This will be known as `best` in the code below. 
 
 ## Model summary:  
 
 ```{r} 
 summary(best)
+gratia::variance_comp(best)
 ```
 
 
@@ -51,7 +52,12 @@ qq.gam(best, rep = 100)
 ```{r}
 appraise(best)
 draw(best, select = 1, dist = 0.02, rug = FALSE)
-draw(best, select = 2, rug = FALSE)
+tryCatch(draw(best, select = 2, dist = 0.02, rug = FALSE), error = function(e) e)
+tryCatch(draw(best, select = 3, dist = 0.02, rug = FALSE), error = function(e) e)
+tryCatch(draw(best, select = 4, dist = 0.02, rug = FALSE), error = function(e) e)
+tryCatch(draw(best, select = 5, dist = 0.02, rug = FALSE), error = function(e) e)
+#see https://stackoverflow.com/questions/47854718/variance-components-of-tensor-interactions-in-rmgcv
+#to understand why there are two components for the ti() smooth
 #try 2D check
 b <- getViz(best, nsim = 50)
 ck1 <- check2D(b, x1 = "X", x2 = "Y")
