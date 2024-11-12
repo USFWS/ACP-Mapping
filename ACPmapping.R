@@ -38,6 +38,8 @@
 #    as the first version of the SPEI map distributed to USFWS ES in February 2024.
 #    Change code at end of file, no need to run all. 
 #
+#  November 2024: Add 2024 data to output data sets birds, lines
+#
 #load and map ACP
 library(sf)
 library(tidyverse)
@@ -1129,3 +1131,114 @@ table(birds$Year, birds$Observer)
 write_csv(birds, file = paste0("Data/ACP_2023/analysis_output/Bird-QC-Obs-",Sys.Date(),".csv"))
 #commit changes
 git2r::commit(all=TRUE, message="fix observer typo")
+################################################################################
+# Add 2024 data
+# need to turn this into a function
+library(tidyverse)
+library(sf)
+source("points2line.R")
+#Sciencebase item number https://www.sciencebase.gov/catalog/item/65419bbdd34ee4b6e05bd005
+library(sbtools)
+tmp <- item_file_download("65419bbdd34ee4b6e05bd005", 
+                   names = "ACP_2022-2024_QCObs_name.zip", 
+                  destinations=file.path(tempdir(), "temp"))
+unzip(zipfile = tmp, exdir = file.path(tempdir(), "temp2"))
+files <- list.files(file.path(tempdir(), "temp2"), full.names = TRUE)
+files
+dat1 <- read_csv(file = files[5])
+dat2 <- read_csv(file = files[6])
+birds24 <- rbind(dat1, dat2) |> 
+  select("Year", "Month", "Day", "Time", "Transect", "Observer", "Seat", 
+         "Species", "Num", "Obs_Type", "Code", "Lat", "Lon") |> 
+  st_as_sf(coords=c("Lon", "Lat"), crs=4326) 
+#makes lines
+lines24 <- birds24 %>% st_transform(crs=4326) %>%
+  group_split(Year, Transect, Day) %>%
+  map(points2line) %>%
+  map_dfr(rbind)
+#plot
+plot(st_geometry(lines24), main = 2024)
+#try tmap to zoom in 
+library(tmap)
+tmap_mode("view")
+acp <- st_read(dsn="Data/ACP_2023/analysis_output/ACP_DesignStrata_QC.gpkg") %>%
+  st_transform(crs=4326) 
+tm_shape(acp) +
+  tm_polygons(fill = "STRATNAME", fill_alpha = 0.5, lwd = 4,  col = "darkgray") +
+  tm_shape(lines24) + tm_lines(lwd = 2, col = "red") +
+  tm_shape(birds24) + tm_dots() +
+  tm_basemap(server = "Esri.WorldImagery")
+#looks good
+lines24 <- rename(lines24, NavTransect = Transect)
+#read in lines data, append, and write to new file
+lines <- st_read(dsn = "Data/ACP_2023/analysis_output/Lines-Obs-2024-02-15.gpkg")
+st_geometry(lines) <- "geometry"
+lines <- rbind(lines, lines24)
+st_write(lines, dsn = paste0("Data/ACP_2023/analysis_output/Lines-Obs-",Sys.Date(), ".gpkg"))
+#now birds
+#need transects for 2024
+tmp <- item_file_download("6477f116d34eac007b50c5cd", 
+                          names = "ACP_DesignTrans.gpkg", 
+                          destinations=file.path(tempdir(), "temp3"))
+st_layers(dsn = file.path(tempdir(), "temp3"))
+#no 2024 transects!
+#try RDR, need to be on VPN
+path <- "//ifw7ro-file.fws.doi.net/datamgt/mbm/mbmwa_008_ACP_Aerial_Survey/data/design_files/ACP_DesignTrans.gpkg"
+trans <- st_layers(dsn = path)
+trans
+#they appear to be on RDR, but 2024 are different CRS than other years
+trans24 <- st_read(dsn = path, layer = "ACP_2024_Transects") |>
+  st_transform(crs = 4326)
+plot(st_geometry(trans24))
+trans <- st_read(dsn = "Data/ACP_2023/analysis_output/ACP_DesignTrans_QC.gpkg")
+filter(trans, Year == 2018) |>
+  st_geometry() |>
+  plot(col = "red", add=TRUE)
+#interesting, transect just south of tesh in 2018 was not in design for 2024
+plot(st_geometry(trans24))
+filter(trans, Year == 2014) |>
+  st_geometry() |>
+  plot(col = "red", add=TRUE)
+#but it was in 2014!
+#what about birds?
+plot(st_geometry(trans24))
+filter(lines, Year == 2018) |>
+  st_geometry() |>
+  plot(col = "red", add=TRUE)
+#it is in the lines/birds data
+#what about the original data source
+trans18 <- st_read(dsn = path, layer = "ACP_2018_Transects") |>
+  st_transform(crs = 4326)
+plot(st_geometry(trans24))
+plot(trans18, col = "red", add=TRUE)
+#also missing in original
+####################################
+trans3 <- mutate(trans24, Year = 2024) |>
+  select(Year, OBJECTID) |>
+  rename(Transect = OBJECTID) |>
+  st_intersection(acp) |>
+  group_by(Year, Stratum, Transect) |> 
+  summarise() |> 
+  ungroup()
+tm_shape(acp) + tm_polygons() + 
+  tm_shape(trans3) + tm_lines(col = "Stratum")
+#write to file
+st_geometry(trans3) <- "geometry"
+trans3 <- st_cast(trans3, "MULTILINESTRING")
+st_geometry(trans) <- "geometry"
+trans <- rbind(trans, trans3)
+st_write(trans, dsn = paste0("Data/ACP_2023/analysis_output/ACP_DesignTrans_QC_",Sys.Date(), ".gpkg"))
+#####################################
+birds3 <- st_join(birds24, trans3, join = st_nearest_feature)
+birds <- read_csv(file = "Data/ACP_2023/analysis_output/Bird-QC-Obs-2024-03-21.csv")
+birds3 <- birds3 %>% select(-Year.y) %>%
+  rename(Year = Year.x, NavTransect = Transect.x, Transect = Transect.y) %>%
+  relocate(Stratum, .after = Time) |>
+  relocate(Transect, .after = Stratum)
+coords <- st_coordinates(birds3)
+birds3 <- st_drop_geometry(birds3) |>
+  cbind(coords) |>
+  rename(Lon = X, Lat = Y)
+#append and write
+birds <- rbind(birds, birds3)
+write_csv(birds, file = paste0("Data/ACP_2023/analysis_output/Bird-QC-Obs-", Sys.Date(),".csv"))

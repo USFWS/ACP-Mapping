@@ -1,7 +1,7 @@
 #write results from make_trend to file
 library(tidyverse)
 source("make_trend.R")
-spp = "STEI"
+spp = "SNOW"
 trend <- make_trend(fit = best, 
                     area = st_read(dsn="Data/ACP_2023/analysis_output/ACP_DesignStrata_QC.gpkg"), 
                     n.samples = 500)

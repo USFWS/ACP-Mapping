@@ -22,7 +22,7 @@ newdf <- st_centroid(grid) %>%
   mutate(Observer = "HMW", Area = units::drop_units(grid$Grid.Area))
 df <- data.frame(NULL)
 for(i in min(fit$model$Year):max(fit$model$Year)){
-  df <- rbind(df, mutate(newdf, Year = i))
+  df <- rbind(df, mutate(newdf, Year = i, fYear = i))
 }
 #simulation posterior
 post <- map_total2(gamfit = fit, Nsamples = n.samples, newdata = df)
