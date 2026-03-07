@@ -1242,3 +1242,76 @@ birds3 <- st_drop_geometry(birds3) |>
 #append and write
 birds <- rbind(birds, birds3)
 write_csv(birds, file = paste0("Data/ACP_2023/analysis_output/Bird-QC-Obs-", Sys.Date(),".csv"))
+######################################################################
+## Add 2025 data
+## Should really, really, make this a function, but for year-specific issues...
+library(tidyverse)
+library(sf)
+source("points2line.R")
+#data not on ScienceBase, use RDR
+dat1 <- read_csv(file = "//ifw7ro-file.fws.doi.net/datamgt/mbm/mbmwa_008_ACP_Aerial_Survey/data/final_data/ACP_2025_QCObs_HWilson.csv")
+dat2 <- read_csv(file = "//ifw7ro-file.fws.doi.net/datamgt/mbm/mbmwa_008_ACP_Aerial_Survey/data/final_data/ACP_2025_QCObs_WSchock.csv")
+birds25 <- rbind(dat1, dat2) |> 
+  select("Year", "Month", "Day", "Time", "Transect", "Observer", "Seat", 
+         "Species", "Num", "Obs_Type", "Code", "Lat", "Lon") |> 
+  st_as_sf(coords=c("Lon", "Lat"), crs=4326) 
+#makes lines
+lines25 <- birds25 %>% st_transform(crs=4326) %>%
+  group_split(Year, Transect, Day) %>%
+  map(points2line) %>%
+  map_dfr(rbind)
+#plot
+plot(st_geometry(lines25), main = 2025)
+library(tmap)
+tmap_mode("view")
+acp <- st_read(dsn="Data/ACP_2023/analysis_output/ACP_DesignStrata_QC.gpkg") %>%
+  st_transform(crs=4326) 
+tm_shape(acp) +
+  tm_polygons(fill = "Stratum", fill_alpha = 0.5, lwd = 4,  col = "darkgray") +
+  tm_shape(lines25) + tm_lines(lwd = 2, col = "red") +
+  tm_shape(birds25) + tm_dots() +
+  tm_basemap(server = "Esri.WorldImagery")
+#looks good
+lines25 <- rename(lines25, NavTransect = Transect)
+#read in lines data, append, and write to new file
+lines <- st_read(dsn = "Data/ACP_2023/analysis_output/Lines-Obs-2024-11-12.gpkg")
+st_geometry(lines) <- "geometry"
+lines <- rbind(lines, lines25)
+st_write(lines, dsn = paste0("Data/ACP_2023/analysis_output/Lines-Obs-",Sys.Date(), ".gpkg"))
+#########################################################
+#now birds
+#need transects for 2025
+#try RDR, need to be on VPN
+path <- "//ifw7ro-file.fws.doi.net/datamgt/mbm/mbmwa_008_ACP_Aerial_Survey/data/source_data/ACP_DesignTrans.gpkg"
+trans <- st_layers(dsn = path)
+trans
+# in 2025 the 2019 transect panel was flown;
+# rotating standard panel 
+trans25 <- st_read(dsn = path, layer = "ACP_2019_Transects") |>
+  st_transform(crs = 4326)
+plot(st_geometry(trans25))
+####################################
+trans3 <- mutate(trans25, Year = 2025) |>
+  select(Year, OBJECTID) |>
+  rename(Transect = OBJECTID) |>
+  st_intersection(acp) |>
+  group_by(Year, Stratum, Transect) |> 
+  summarise() |> 
+  ungroup()
+tm_shape(acp) + tm_polygons() + 
+  tm_shape(trans3) + tm_lines(col = "Stratum")
+#note missing transect section south of tesh. 
+#####################################
+birds3 <- st_join(birds25, trans3, join = st_nearest_feature)
+birds <- read_csv(file = "Data/ACP_2023/analysis_output/Bird-QC-Obs-2024-11-12.csv")
+birds3 <- birds3 %>% select(-Year.y) %>%
+  rename(Year = Year.x, NavTransect = Transect.x, Transect = Transect.y) %>%
+  relocate(Stratum, .after = Time) |>
+  relocate(Transect, .after = Stratum)
+coords <- st_coordinates(birds3)
+birds3 <- st_drop_geometry(birds3) |>
+  cbind(coords) |>
+  rename(Lon = X, Lat = Y)
+#append and write
+birds <- rbind(birds, birds3)
+write_csv(birds, file = paste0("Data/ACP_2023/analysis_output/Bird-QC-Obs-", Sys.Date(),".csv"))
