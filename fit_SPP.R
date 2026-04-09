@@ -32,11 +32,29 @@ source("map_density_functions.R")
 # spp.list <- c("GWFG")
 # fit.fam <- "quasi(link='log', variance='mu')"
 #not sure quasi was much better. Stick with nb for now
-spp.list <- c("SNOW") #fit on 2024-07-09
+#spp.list <- c("SNOW") #fit on 2024-07-09
+# spp.list <- c("SNGO", "SWAN", "UNSC", "RNGR", "JAEG", "SAGU", "GLGU", 
+#               "ARTE", "RTLO", "PALO", "YBLO", "GOEA", "SEOW", "SNOW", 
+#               "CORA", "EMGO", "GWFG", "BRAN", "CCGO", "TAVS", "NSHO", 
+#               "AMWI", "MALL", "NOPI", "GWTE", "CANV", "STEI", "SPEI", 
+#               "KIEI", "COEI", "SUSC", "WWSC", "BLSC", "LTDU", "RBME", 
+#               "SACR")
+# SNGO to CORA ran on 2026-3-6; error due to no EMGO; added conditional next 
+#Run starting at EMGO to test on 2026-3-9:
+# spp.list <- c("EMGO", "GWFG", "BRAN", "CCGO", "TAVS", "NSHO", 
+#               "AMWI", "MALL", "NOPI", "GWTE", "CANV", "STEI", "SPEI", 
+#               "KIEI", "COEI", "SUSC", "WWSC", "BLSC", "LTDU", "RBME", 
+#               "SACR")
+# Patch Wednesday killed above after GWTE on 2026-03-12
+# Start with STEI as CANV are not in ACP list, 
+#  should make survey specific lists, 
+spp.list <- c("STEI", "SPEI", "KIEI", "COEI", "SUSC", "WWSC", "BLSC", 
+              "LTDU", "RBME", "SACR")
+
 fit.fam <- "nb"
 #read in lines and birds data
-lines <- st_read(dsn = "Data/ACP_2023/analysis_output/Lines-Obs-2024-02-15.gpkg")
-birds <- read_csv(file = "Data/ACP_2023/analysis_output/Bird-QC-Obs-2024-03-21.csv") %>%
+lines <- st_read(dsn = "Data/ACP_2023/analysis_output/Lines-Obs-2026-03-06.gpkg")
+birds <- read_csv(file = "Data/ACP_2023/analysis_output/Bird-QC-Obs-2026-03-06.csv") %>%
   st_as_sf(coords = c("Lon", "Lat"), crs = 4326)
 acp <- st_read(dsn="Data/ACP_2023/analysis_output/ACP_DesignStrata_QC.gpkg")
 #make grid
@@ -49,6 +67,7 @@ grid <- st_intersection(acp, st_make_grid(x=acp, cellsize = 6000)) %>%
 #Do this for each species
 years <- unique(birds$Year)
 for(spp in spp.list){
+  if( sum(filter(birds, Species == spp)$Num) == 0 ) next
   message(paste0("Starting species ", spp))
   df <- data.frame(NULL)
   for(i in years){
@@ -61,62 +80,59 @@ for(spp in spp.list){
   }
   #fit GAM
   message("fitting models")
-  fit0 <- gam(Count~s(X, Y, bs="ds", k = 200, m=c(1,.5)),
+  fit0 <- gam(Count~s(X, Y, bs="tp", k = 200, m=c(1,.5)),
               offset = logArea, family = nb, method = "REML", data = df)
   message("fit0 done")
-  fit1 <- gam(Count~s(X, Y, bs="ds", k = 200, m=c(1,.5)) + s(Year, k = 10),
+  fit1 <- gam(Count~s(X, Y, bs="tp", k = 200, m=c(1,.5)) + s(Year, k = 10),
               offset = logArea, family = nb, method = "REML", data = df)
   message("fit1 done")
-  fit2 <- gam(Count~s(X, Y, bs="ds", k = 200, m=c(1,.5)) + s(Year, k = 10) +
+  fit2 <- gam(Count~s(X, Y, bs="tp", k = 200, m=c(1,.5)) + s(Year, k = 10) +
                 ti(X, Y, Year, k = c(50, 5), d=c(2, 1), bs = c("ds", "cr"),
                    m=list(c(1,.5),rep(0,0))),
               offset = logArea, family = nb, method = "REML", data = df)
   message("fit2 done")
   #fit models with Observer covariate
   df$Observer <- factor(df$Observer)
-  fit0.o <- gam(Count~s(X, Y, bs="ds", k = 200, m=c(1,.5)) + s(Observer, bs = "re"),
+  fit0.o <- gam(Count~s(X, Y, bs="tp", k = 200) + s(Observer, bs = "re"),
                 offset = logArea, family = nb, method = "REML", data = df)
   message("fit0.o done")
-  fit1.o <- gam(Count~s(X, Y, bs="ds", k = 200, m=c(1,.5)) + s(Observer, bs = "re") +
+  fit1.o <- gam(Count~s(X, Y, bs="tp", k = 200) + s(Observer, bs = "re") +
                   s(Year, k = 10),
                 offset = logArea, family = nb, method = "REML", data = df)
   message("fit1.o done")
-  fit2.o <- gam(Count~s(X, Y, bs="ds", k = 200, m=c(1,.5)) + s(Observer, bs = "re") +
+  fit2.o <- gam(Count~s(X, Y, bs="tp", k = 200) + s(Observer, bs = "re") +
                   s(Year, k = 10) +
-                  ti(X, Y, Year, k = c(50, 5), d=c(2, 1), bs = c("ds", "cr"),
-                     m=list(c(1,.5),rep(0,0))),
+                  ti(X, Y, Year, k = c(50, 5), d=c(2, 1)),
                 offset = logArea, family = nb, method = "REML", data = df)
   message("fit2.o done")
   # #add random effect of year
   df$fYear <- factor(df$Year)
-  fit0.re <- gam(Count~s(X, Y, bs="ds", k = 200, m=c(1,.5)) +
+  fit0.re <- gam(Count~s(X, Y, bs="tp", k = 200) +
                    s(fYear, bs = "re"),
                  offset = logArea, family = nb, method = "REML", data = df)
   message("fit0.re done")
-  fit1.re <- gam(Count~s(X, Y, bs="ds", k = 200, m=c(1,.5)) + s(Year, k = 10) +
+  fit1.re <- gam(Count~s(X, Y, bs="tp", k = 200) + s(Year, k = 10) +
                    s(fYear, bs = "re"),
                  offset = logArea, family = nb, method = "REML", data = df)
   message("fit1.re done")
-  fit2.re <- gam(Count~s(X, Y, bs="ds", k = 200, m=c(1,.5)) + s(Year, k = 10) +
+  fit2.re <- gam(Count~s(X, Y, bs="tp", k = 200) + s(Year, k = 10) +
                    s(fYear, bs = "re") +
-                   ti(X, Y, Year, k = c(50, 5), d=c(2, 1), bs = c("ds", "cr"),
-                      m=list(c(1,.5),rep(0,0))),
+                   ti(X, Y, Year, k = c(50, 5), d=c(2, 1)),
                  offset = logArea, family = nb, method = "REML", data = df)
   message("fit2.re done")
-  fit0.o.re <- gam(Count~s(X, Y, bs="ds", k = 200, m=c(1,.5)) + s(Observer, bs = "re") +
+  fit0.o.re <- gam(Count~s(X, Y, bs="tp", k = 200) + s(Observer, bs = "re") +
                      s(fYear, bs = "re"),
                    offset = logArea, family = nb, method = "REML", data = df)
   message("fit0.o.re done")
-  fit1.o.re <- gam(Count~s(X, Y, bs="ds", k = 200, m=c(1,.5)) + s(Observer, bs = "re") +
+  fit1.o.re <- gam(Count~s(X, Y, bs="tp", k = 200) + s(Observer, bs = "re") +
                      s(fYear, bs = "re") +
                      s(Year, k = 10),
                    offset = logArea, family = nb, method = "REML", data = df)
   message("fit1.o.re done")
-  fit2.o.re <- gam(Count~s(X, Y, bs="ds", k = 200, m=c(1,.5)) + s(Observer, bs = "re") + 
+  fit2.o.re <- gam(Count~s(X, Y, bs="tp", k = 200) + s(Observer, bs = "re") + 
                      s(fYear, bs = "re") + 
                      s(Year, k = 10) + 
-                     ti(X, Y, Year, k = c(50, 5), d=c(2, 1), bs = c("ds", "cr"), 
-                        m=list(c(1,.5),rep(0,0))),
+                     ti(X, Y, Year, k = c(50, 5), d=c(2, 1)),
                    offset = logArea, family = fit.fam, method = "REML", data = df)
   message("fit2.o.re done")
   aic <- AIC(fit0, fit0.o, fit1, fit1.o, fit2, fit2.o, fit0.re, fit1.re, fit2.re,

@@ -13,7 +13,7 @@ sink(zz, type = "message")
 
 path = NULL
 exclude.spp = c("SWANN", "UNGR", "UNME", "UNEI", "BAEA", "COME")
-spp = "ARTE"
+spp = "PALO"
 area = "ACP"
 override = NULL
 if(area == "ACP") data <- ACPHistoric$output.table
