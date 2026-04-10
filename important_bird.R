@@ -44,12 +44,14 @@ for(i in 2:length(spplist)){
 # y <- global(iba, "range", na.rm = TRUE)
 # y <- (y[1,2] - y[1,1])
 # iba <- (iba - x)/y
-png(filename = "Data/ACP_2025/Rel_import.png", height = 200)
+png(filename = "Data/ACP_2025/plots/Rel_import.png", height = 200)
 plot(iba, main = "Relative importance to waterbirds", axes = FALSE)
 dev.off()
+writeRaster(iba, filename = "Data/ACP_2025/plots/Rel_import.tif")
 # iba2 <- ifel(iba > 0.6, 1, 0)
 # plot(iba2, main = "Relative importance to waterbirds")
 # ##############################################
+# standardize to mean, 3 discrete levels relative to mean
 # #make template raster
 # iba <- rast(x=paste0("Data/ACP_2025/gam/ACP-", spplist[1], "-2026-04-06.tif"), 
 #             lyrs = 3)
@@ -76,5 +78,30 @@ dev.off()
 #   iba <- iba + r
 # }
 # plot(iba)
+# ############################################################
+# # standardized to mean, then to range, leave continuous
+# iba <- rast(x=paste0("Data/ACP_2025/gam/ACP-", spplist[1], "-2026-04-06.tif"),
+#             lyrs = 3)
+# plot(iba)
+# x <- global(iba, "mean", na.rm=TRUE)[1,1]
+# iba <- (iba - x)/x
+# plot(iba)
+# x <- global(iba, "min", na.rm=TRUE)[1,1]
+# y <- global(iba, "range", na.rm = TRUE)
+# y <- (y[1,2] - y[1,1])
+# iba <- (iba - x)/y
+# plot(iba)
 # 
-# 
+# #loop over species
+# for(i in 2:length(spplist)){
+#   r <- rast(x=paste0("Data/ACP_2025/gam/ACP-", spplist[i], "-2026-04-06.tif"),
+#               lyrs = 3)
+#   x <- global(r, "mean", na.rm=TRUE)[1,1]
+#   r <- (r - x)/x
+#   x <- global(r, "min", na.rm=TRUE)[1,1]
+#   y <- global(r, "range", na.rm = TRUE)
+#   y <- (y[1,2] - y[1,1])
+#   r <- (r - x)/y
+#   iba <- iba + r
+# }
+# plot(iba)

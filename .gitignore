@@ -4,6 +4,7 @@
 .Ruserdata
 *.html
 Data/**
+!Data/ACP_2025/Readme.md
 Design_Strata/**
 Design_Transects/**
 plot_trends/**
